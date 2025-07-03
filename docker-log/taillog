@@ -1,0 +1,55 @@
+#/bin/bash
+
+# Check parameter: keyword
+if [ "$#" -ne 1 ]; then
+    echo "Requires exactly 1 argument as the searching keyword."
+    exit
+fi
+
+dockerServices=`docker ps -a --format "{{.ID}}:{{.Names}}" | grep -i $1 | nl -w2 -s':'`
+
+function tips() {
+    echo "
+**********************************
+*                                *
+* Taillog for docker containers! *
+*          by wzh            *
+*                                *
+**********************************
+"
+}
+
+tips
+
+# Check valid docker services from searched result
+if [ -z "$dockerServices" ]; then
+    echo "No valid dockerService(s) was found with keyword <$1>"
+    exit
+else
+    serviceCount=`echo "$dockerServices" | wc -l`
+fi
+
+echo -e "\r\n===== $serviceCount docker service(s) are found with keyword <$1> =====\r\n"
+
+# Select one valid docker container
+if [ "$serviceCount" -eq 0 ]; then
+    echo "No valid docker service was found with keyword <$1>"
+    exit
+elif [ "$serviceCount" -eq 1 ]; then
+    containerName=`echo $dockerServices | cut -d':' -f3`
+else
+    select container in $dockerServices;
+    do
+      containerName=`echo $container | cut -d':' -f3`
+      echo "You selected container: $container ($REPLY)"
+      break
+    done
+fi
+
+# tail log for selected docker container
+if [ -z "$containerName" ]; then
+    echo "You selected invalid container name"
+    exit
+else
+    docker logs -f --tail=500 $containerName
+fi

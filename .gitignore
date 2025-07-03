@@ -1,0 +1,83 @@
+# C extensions
+*.so
+
+# ===== IDE and Editors =====
+# PyCharm
+.idea/
+
+# VS Code
+.vscode/
+
+# Spyder
+.spyderproject
+.spyproject
+
+# Rope
+.ropeproject
+
+# Cursor
+.cursor
+
+# Cython debug symbols
+cython_debug/
+
+# ===== Documentation =====
+# mkdocs
+/site
+
+# ===== Logs and Temporary Files =====
+*.log
+logs/
+tmp/
+temp/
+
+# ===== Media and Uploads =====
+media/
+uploads/
+recordings/
+transcriptions/
+
+# ===== AI/ML Specific =====
+# DeepEval
+deepeval/
+.deepeval*
+
+# Voice test results
+app/services/voice/test_result/*
+
+# ===== Development and Testing =====
+# Test files
+tests/
+test_*
+*_test.py
+bot_test_results.txt
+bugs.txt
+
+# Configuration files
+settings.json
+
+# ===== Node.js (if any frontend components) =====
+node_modules/
+
+# ===== OS Generated Files =====
+# macOS
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+
+# Windows
+ehthumbs.db
+Thumbs.db
+*.lnk
+
+# Linux
+*~
+
+# ===== Backup and Temporary Files =====
+*.bak
+*.backup
+*.swp
+*.swo
+*~
