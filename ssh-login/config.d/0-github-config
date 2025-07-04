@@ -1,0 +1,7 @@
+Host work-github
+    HostName github.com
+    #Desc My Github host
+
+Host github.com
+    HostName github.com
+    #Desc My Github host

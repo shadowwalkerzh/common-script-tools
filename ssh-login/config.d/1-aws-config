@@ -1,0 +1,3 @@
+Host aws-dev
+    HostName ec2-1-2-3-4.compute.amazonaws.com
+    #Desc My aws development environment

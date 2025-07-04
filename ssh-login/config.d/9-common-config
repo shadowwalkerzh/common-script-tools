@@ -1,0 +1,14 @@
+# All hosts start with work- will login with User work
+Host work-*
+    User work
+    IdentityFile ~/.ssh/id_ras_work
+
+# All hosts start with github. will login with User github
+Host github.*
+    User github
+    IdentityFile ~/.ssh/id_rsa_github
+
+# All hosts start with aws- will login with User ec2-user
+Host aws-*
+    User ec2-user
+    IdentityFile ~/.ssh/my-aws.pem
