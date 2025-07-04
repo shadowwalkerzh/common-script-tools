@@ -1,0 +1,130 @@
+#!/usr/bin/env bash
+
+# Interactive SSH Login Script (Supports Multiple Configuration Files)
+# Key Features:
+## - Multi-File Support: Reads both ~/.ssh/config and all *-config files under ~/.ssh/config.d/
+## - Smart Filtering: Automatically skips invalid entries (those without HostName)
+## - Flexible Description Parsing: Recognizes #Desc ... format
+# Intuitive Interface:
+## - Numbered host list with IP and descriptions
+## - Input validation and error handling
+
+function tips() {
+    echo "
+*************************************************************************************
+*                                                                                   *
+*                          Interactive SSH Login Script!                            *
+*                                                                                   *
+* 1. Multi-File Support: Reads both ~/.ssh/config and ~/.ssh/config.d/*-config      *
+* 2. Smart Filtering: Automatically skips invalid entries (those without HostName)  *
+* 3. Flexible Description Parsing: Recognizes #Desc ... format                      *
+* 4. Numbered host list with IP and descriptions                                    *
+* 5. Input validation and error handling                                            *
+*                                                                                   *
+*                                    by wzh                                         *
+*                                                                                   *
+*************************************************************************************
+"
+}
+
+tips
+
+# Define Config file paths
+SSH_CONFIG="$HOME/.ssh/config"
+SSH_CONFIG_DIR="$HOME/.ssh/config.d"
+
+# Check if config files exist
+if [ ! -f "$SSH_CONFIG" ] && [ ! -d "$SSH_CONFIG_DIR" ]; then
+    echo "ERROR: No SSH config file found..."
+    echo "Please make sure $SSH_CONFIG or $SSH_CONFIG_DIR directory exists..."
+    exit 1
+fi
+
+# Collect all config files
+config_files=()
+[ -f "$SSH_CONFIG" ] && config_files+=("$SSH_CONFIG")
+if [ -d "$SSH_CONFIG_DIR" ]; then
+    while IFS= read -r -d $'\0' file; do
+        config_files+=("$file")
+    done < <(find "$SSH_CONFIG_DIR" -type f -name "*-config" -print0)
+fi
+
+# Parse all ssh config files
+parse_ssh_configs() {
+    awk '
+    BEGIN {
+        print "No.\tHostname\t\tIP\t\tDescription"
+        print "------------------------------------------------------------------------------"
+        i=1
+    }
+    /^Host / && $2 != "*" {
+        host=$2
+        ip=""
+        desc=""
+        has_hostname=0
+        while (getline == 1) {
+            if ($0 !~ /^[ \t]/) { break }  # Exit when encountering the next Host section
+            if ($1 == "HostName") { ip=$2; has_hostname=1 }
+            if ($1 == "#Desc") {
+                $1=""; desc=$0
+                sub(/^[ \t]+/, "", desc)
+            }
+            else if ($1 == "#" && NF >= 2) {
+                $1=""; desc=$0
+                sub(/^[ \t]+/, "", desc)
+            }
+        }
+        if (has_hostname) {
+            if (desc == "") { desc="-" }
+            printf "%-4d\t%-20s\t%-15s\t%s\n", i++, host, ip, desc
+        }
+    }
+    END {
+        print "------------------------------------------------------------------------------"
+    }' "${config_files[@]}"
+}
+
+# Get available host list
+get_valid_hosts() {
+    awk '
+    /^Host / && $2 != "*" {
+        host=$2
+        has_hostname=0
+        while (getline == 1) {
+            if ($0 !~ /^[ \t]/) { break }
+            if ($1 == "HostName") { has_hostname=1 }
+        }
+        if (has_hostname) { print host }
+    }' "${config_files[@]}"
+}
+
+# Show available hosts
+echo "Show available SSH hosts："
+parse_ssh_configs
+
+# Get host array
+hosts=($(get_valid_hosts))
+if [ ${#hosts[@]} -eq 0 ]; then
+    echo "ERROR: No valid SSH host config found..."
+    exit 1
+fi
+
+# User choices
+while true; do
+    read -p "Please select the host number (exit with q): " choice
+
+    if [[ "$choice" == "q" ]]; then
+        echo "exit..."
+        exit 0
+    fi
+
+    if ! [[ "$choice" =~ ^[0-9]+$ ]] || (( choice < 1 || choice > ${#hosts[@]} )); then
+        echo "Invalid input  please input 1-${#hosts[@]}number or exit with q"
+        continue
+    fi
+
+    selected_host="${hosts[$((choice-1))]}"
+    echo "Connecting to $selected_host ..."
+    ssh "$selected_host"
+    break
+done
