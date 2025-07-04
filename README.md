@@ -18,3 +18,4 @@
 - Input validation and error handling
 
 ### How to install?
+```curl -OfsSL https://raw.githubusercontent.com/shadowwalkerzh/common-script-tools/refs/heads/main/ssh-login/towhere && sudo install -m 755 towhere /usr/local/bin/towhere && rm -f towhere```
