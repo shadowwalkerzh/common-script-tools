@@ -17,3 +17,4 @@
 - Numbered host list with IP and descriptions
 - Input validation and error handling
 
+### How to install?
