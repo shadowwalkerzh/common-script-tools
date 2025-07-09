@@ -5,9 +5,16 @@
 ## - Multi-File Support: Reads both ~/.ssh/config and all *-config files under ~/.ssh/config.d/
 ## - Smart Filtering: Automatically skips invalid entries (those without HostName)
 ## - Flexible Description Parsing: Recognizes #Desc ... format
+## - Keyword Filtering: Case-insensitive host name filtering with command line argument
 # Intuitive Interface:
 ## - Numbered host list with IP and descriptions
 ## - Input validation and error handling
+
+# Get keyword filter from command line argument
+KEYWORD_FILTER=""
+if [ $# -eq 1 ]; then
+    KEYWORD_FILTER="$1"
+fi
 
 function tips() {
     echo "
@@ -18,8 +25,13 @@ function tips() {
 * 1. Multi-File Support: Reads both ~/.ssh/config and ~/.ssh/config.d/*-config      *
 * 2. Smart Filtering: Automatically skips invalid entries (those without HostName)  *
 * 3. Flexible Description Parsing: Recognizes #Desc ... format                      *
-* 4. Numbered host list with IP and descriptions                                    *
-* 5. Input validation and error handling                                            *
+* 4. Keyword Filtering: Case-insensitive host name filtering                        *
+* 5. Numbered host list with IP and descriptions                                    *
+* 6. Input validation and error handling                                            *
+*                                                                                   *
+* Usage:                                                                            *
+*   $0              - Show all hosts                                                *
+*   $0 <keyword>    - Filter hosts by keyword (case-insensitive)                   *
 *                                                                                   *
 *                                    by wzh                                         *
 *                                                                                   *
@@ -51,7 +63,9 @@ fi
 
 # Parse all ssh config files
 parse_ssh_configs() {
-    awk '
+    local keyword="$1"
+    
+    awk -v keyword="$keyword" '
     BEGIN {
         print "No.\tHostname\t\tIP\t\tDescription"
         print "------------------------------------------------------------------------------"
@@ -62,6 +76,12 @@ parse_ssh_configs() {
         ip=""
         desc=""
         has_hostname=0
+        
+        # Skip if keyword filter is provided and host doesn't match
+        if (keyword != "" && tolower(host) !~ tolower(keyword)) {
+            next
+        }
+        
         while (getline == 1) {
             if ($0 !~ /^[ \t]/) { break }  # Exit when encountering the next Host section
             if ($1 == "HostName") { ip=$2; has_hostname=1 }
@@ -86,9 +106,17 @@ parse_ssh_configs() {
 
 # Get available host list
 get_valid_hosts() {
-    awk '
+    local keyword="$1"
+    
+    awk -v keyword="$keyword" '
     /^Host / && $2 != "*" {
         host=$2
+        
+        # Skip if keyword filter is provided and host doesn't match
+        if (keyword != "" && tolower(host) !~ tolower(keyword)) {
+            next
+        }
+        
         has_hostname=0
         while (getline == 1) {
             if ($0 !~ /^[ \t]/) { break }
@@ -99,13 +127,22 @@ get_valid_hosts() {
 }
 
 # Show available hosts
-echo "Show available SSH hosts："
-parse_ssh_configs
+if [ -n "$KEYWORD_FILTER" ]; then
+    echo "Show available SSH hosts (filtered by keyword: '$KEYWORD_FILTER')："
+else
+    echo "Show available SSH hosts："
+fi
+
+parse_ssh_configs "$KEYWORD_FILTER"
 
 # Get host array
-hosts=($(get_valid_hosts))
+hosts=($(get_valid_hosts "$KEYWORD_FILTER"))
 if [ ${#hosts[@]} -eq 0 ]; then
-    echo "ERROR: No valid SSH host config found..."
+    if [ -n "$KEYWORD_FILTER" ]; then
+        echo "ERROR: No SSH host config found matching keyword '$KEYWORD_FILTER'..."
+    else
+        echo "ERROR: No valid SSH host config found..."
+    fi
     exit 1
 fi
 
