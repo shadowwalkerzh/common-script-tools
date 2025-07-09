@@ -31,7 +31,7 @@ function tips() {
 *                                                                                   *
 * Usage:                                                                            *
 *   $0              - Show all hosts                                                *
-*   $0 <keyword>    - Filter hosts by keyword (case-insensitive)                   *
+*   $0 <keyword>    - Filter hosts by keyword (case-insensitive)                    *
 *                                                                                   *
 *                                    by wzh                                         *
 *                                                                                   *
@@ -73,17 +73,17 @@ parse_ssh_configs() {
     }
     /^Host / && $2 != "*" {
         host=$2
-        ip=""
-        desc=""
-        has_hostname=0
         
-        # Skip if keyword filter is provided and host doesn't match
         if (keyword != "" && tolower(host) !~ tolower(keyword)) {
             next
         }
         
+        ip=""
+        desc=""
+        has_hostname=0
+        
         while (getline == 1) {
-            if ($0 !~ /^[ \t]/) { break }  # Exit when encountering the next Host section
+            if ($0 !~ /^[ \t]/) { break }
             if ($1 == "HostName") { ip=$2; has_hostname=1 }
             if ($1 == "#Desc") {
                 $1=""; desc=$0
@@ -112,7 +112,6 @@ get_valid_hosts() {
     /^Host / && $2 != "*" {
         host=$2
         
-        # Skip if keyword filter is provided and host doesn't match
         if (keyword != "" && tolower(host) !~ tolower(keyword)) {
             next
         }
