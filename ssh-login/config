@@ -1,9 +1,14 @@
 # main config file
 
-Include ~/.ssh/config.d/*
+Include ~/.ssh/config.d/*-config
 
-Host default
-    ForwardAgent yes
+Host *
+    ForwardAgent yes # 是否启用 SSH 代理转发（yes/no）
+    ServerAliveInterval 60 # 设置无响应时发送 keepalive 消息的间隔（秒）
+    ServerAliveCountMax 3 # 服务器无响应时的 keepalive 消息发送次数
+    ControlMaster auto # 是否启用连接共享（yes/no/auto/autoask）
+    ControlPath ~/.ssh/control-%r@%h:%p # 控制套接字路径
+    ControlPersist 1h # 主连接保持时间,主连接在最后一个会话关闭后保持1小时
 
 ### If you don't use the config.d directory, you uncomment the full config here and comment the Include line
 
